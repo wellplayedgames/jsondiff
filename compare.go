@@ -22,6 +22,17 @@ func CompareJSON(source, target []byte, opts ...Option) (Patch, error) {
 	return compareJSON(&d, source, target, d.opts.unmarshal)
 }
 
+// CompareWithoutMarshals functions similarly to Compare
+// but assumes the interface provided consists only of
+// primitive types valid for the JSON format and therefore
+// does not need marshalunmarshaling.
+func CompareWithoutMarshals(source, target interface{}, targetBytes []byte, opts ...Option) Patch {
+	var d Differ
+	d.applyOpts(opts...)
+
+	return compareWithoutMarshals(&d, source, target, targetBytes)
+}
+
 func compare(d *Differ, src, tgt interface{}) (Patch, error) {
 	if d.opts.marshal == nil {
 		d.opts.marshal = json.Marshal
@@ -58,6 +69,13 @@ func compareJSON(d *Differ, src, tgt []byte, unmarshal unmarshalFunc) (Patch, er
 
 	d.Compare(si, ti)
 	return d.patch, nil
+}
+
+func compareWithoutMarshals(d *Differ, si, ti interface{}, tb []byte) Patch {
+	d.targetBytes = tb
+
+	d.Compare(si, ti)
+	return d.patch
 }
 
 // marshalUnmarshal returns the result of unmarshaling

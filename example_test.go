@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/wI2L/jsondiff"
+	"github.com/wellplayedgames/jsondiff"
 )
 
 type (
