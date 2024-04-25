@@ -89,3 +89,19 @@ func Ignores(ptrs ...string) Option {
 		o.opts.hasIgnore = true
 	}
 }
+
+// Includes defines the list of values that are included (ignoring all others)
+// by the diff generation, represented as a list of JSON
+// Pointer strings (RFC 6901).
+func Includes(ptrs ...string) Option {
+	return func(o *Differ) {
+		if len(ptrs) == 0 {
+			return
+		}
+		o.opts.includes = make(map[string]struct{}, len(ptrs))
+		for _, ptr := range ptrs {
+			o.opts.includes[ptr] = struct{}{}
+		}
+		o.opts.hasInclude = true
+	}
+}

@@ -27,9 +27,11 @@ type (
 
 type options struct {
 	ignores     map[string]struct{}
+	includes    map[string]struct{}
 	marshal     marshalFunc
 	unmarshal   unmarshalFunc
 	hasIgnore   bool
+	hasInclude  bool
 	factorize   bool
 	rationalize bool
 	invertible  bool
@@ -92,7 +94,7 @@ func (d *Differ) Compare(src, tgt interface{}) {
 func (d *Differ) isIgnored(ptr pointer) bool {
 	// Fast path, inlined map check.
 	if !d.opts.hasIgnore {
-		return false
+		return !d.isIncluded(ptr)
 	}
 	// Slow path.
 	// Outlined so that the fast path can be inlined.
@@ -102,6 +104,27 @@ func (d *Differ) isIgnored(ptr pointer) bool {
 func (d *Differ) findIgnored(ptr pointer) bool {
 	_, found := d.opts.ignores[ptr.string()]
 	return found
+}
+
+func (d *Differ) isIncluded(ptr pointer) bool {
+	// Fast path, inlined map check.
+	if !d.opts.hasInclude {
+		return true
+	}
+	// Slow path.
+	// Outlined so that the fast path can be inlined.
+	return d.findIncluded(ptr)
+}
+
+func (d *Differ) findIncluded(ptr pointer) bool {
+	ptrStr := ptr.string()
+	for k := range d.opts.includes {
+		if strings.HasPrefix(ptrStr, k) || strings.HasPrefix(k, ptrStr) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (d *Differ) diff(ptr pointer, src, tgt interface{}, doc string) {
