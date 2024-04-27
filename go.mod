@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/tidwall/gjson v1.17.1
 	github.com/tidwall/sjson v1.2.5
+	github.com/wI2L/jsondiff v0.5.2
 )
 
 require (

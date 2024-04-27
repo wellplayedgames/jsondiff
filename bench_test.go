@@ -41,6 +41,8 @@ func subBenchmarks(b *testing.B, src, tgt, tgtUnordered []byte) {
 		afterBytes []byte
 	}{
 		{"default", nil, tgt},
+		{"default-include", makeopts(Includes("/pine", "/silence/ate", "/already", "/it")), tgt},
+		{"default-ignore", makeopts(Ignores("/silence/feathers", "/silence/provide", "/silence/lion")), tgt},
 		{"default-unordered", nil, tgtUnordered},
 		{"invertible", makeopts(Invertible()), tgt},
 		{"factorize", makeopts(Factorize()), tgt},
