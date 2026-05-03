@@ -145,9 +145,11 @@ func toDotPath(path string, src []byte) (string, error) {
 		return "", fmt.Errorf("failed to parse path: %w", err)
 	}
 	sb := strings.Builder{}
+	psb := strings.Builder{}
 
 	for i, f := range fragments {
 		var key string
+		var pkey string
 		switch {
 		case len(f) != 0 && unicode.IsDigit(rune(f[0])):
 			// The fragment starts with a digit, which
@@ -158,7 +160,7 @@ func toDotPath(path string, src []byte) (string, error) {
 				// Since the JSON Pointer RFC does not differentiate
 				// between the two, we have to look up the value to
 				// know what we're dealing with.
-				p := sb.String()
+				p := psb.String()
 				if p == "" {
 					p = "@this"
 				}
@@ -167,12 +169,14 @@ func toDotPath(path string, src []byte) (string, error) {
 				case r.IsArray():
 					// Write array indice as-is.
 					key = f
+					pkey = f
 				case r.IsObject():
 					// Force the number as an object key, by
 					// preceding it with a colon character.
 					key = ":" + f
+					pkey = f
 				default:
-					return "", fmt.Errorf("unexpected value type at path: %s, %v", sb.String(), r.Type)
+					return "", fmt.Errorf("unexpected value type at path: %s, %v", p, r.Type)
 				}
 			}
 		case f == "-" && i == len(fragments)-1:
@@ -180,15 +184,19 @@ func toDotPath(path string, src []byte) (string, error) {
 			// it indicates that the value is a nonexistent
 			// element to append to the array.
 			key = "-1"
+			pkey = "-"
 		default:
 			key = rfc6901Unescaper.Replace(f)
 			key = strings.ReplaceAll(key, ".", `\.`)
+			pkey = f
 		}
 		if i != 0 {
 			// Add separator character
 			sb.WriteByte('.')
+			psb.WriteByte('.')
 		}
 		sb.WriteString(key)
+		psb.WriteString(pkey)
 	}
 	return sb.String(), nil
 }
