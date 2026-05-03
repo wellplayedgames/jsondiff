@@ -172,7 +172,7 @@ func toDotPath(path string, src []byte) (string, error) {
 					// preceding it with a colon character.
 					key = ":" + f
 				default:
-					return "", fmt.Errorf("unexpected value type at path: %s", sb.String())
+					return "", fmt.Errorf("unexpected value type at path: %s, %v", sb.String(), r.Type)
 				}
 			}
 		case f == "-" && i == len(fragments)-1:
