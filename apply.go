@@ -12,6 +12,10 @@ import (
 	"github.com/tidwall/sjson"
 )
 
+func (p Patch) Apply(src []byte) ([]byte, error) {
+	return p.apply(src, true)
+}
+
 // apply applies the patch to the given source document.
 // If valid is true, the document is validated prior to
 // the application of the patch.
