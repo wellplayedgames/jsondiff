@@ -2,6 +2,7 @@ package jsondiff
 
 import (
 	"encoding/json"
+	"reflect"
 	"strconv"
 )
 
@@ -82,6 +83,11 @@ func deepEqualValue(src, tgt interface{}) bool {
 		if len(oarr) != len(narr) {
 			return false
 		}
+		if len(oarr) > 0 && &oarr[0] == &narr[0] {
+			// The same slice. Callers that reuse unchanged subtrees
+			// between the source and target documents skip walking them.
+			return true
+		}
 		for i := 0; i < len(oarr); i++ {
 			if !deepEqual(oarr[i], narr[i]) {
 				return false
@@ -94,6 +100,10 @@ func deepEqualValue(src, tgt interface{}) bool {
 
 		if len(oobj) != len(nobj) {
 			return false
+		}
+		if reflect.ValueOf(oobj).UnsafePointer() == reflect.ValueOf(nobj).UnsafePointer() {
+			// The same map; see the array case.
+			return true
 		}
 		for k, v1 := range oobj {
 			v2, ok := nobj[k]
