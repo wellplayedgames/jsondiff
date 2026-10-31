@@ -35,6 +35,9 @@ type options struct {
 	invertible  bool
 	equivalent  bool
 	lcs         bool
+	// shiftedRemovals and shiftedInserts enable compareShiftedArrays.
+	shiftedRemovals bool
+	shiftedInserts  bool
 }
 
 type jsonNode struct {
@@ -276,6 +279,9 @@ func (d *Differ) compareObjects(ptr pointer, src, tgt map[string]interface{}, do
 // represents the differences between two JSON arrays.
 func (d *Differ) compareArrays(ptr pointer, src, tgt []interface{}, doc string) {
 	ptr.snapshot()
+	if d.compareShiftedArrays(ptr, src, tgt, doc) {
+		return
+	}
 	sl, tl := len(src), len(tgt)
 	ml := min(sl, tl)
 
@@ -327,6 +333,67 @@ comparisons:
 			ptr.rewind()
 		}
 	}
+}
+
+// compareShiftedArrays handles arrays that differ only by one contiguous
+// block of elements inserted or removed before at least one unchanged
+// element, e.g. an element pushed to or popped from the front. The
+// positional comparison would rewrite every element after the block, since
+// each one moved to a new index; this emits one add or remove per element
+// of the block instead. It reports whether it handled the arrays; when it
+// returns false it has emitted nothing.
+//
+// Changes at the end of the array are left to the positional comparison,
+// which already emits one add or remove per element for them, so appends
+// and truncations produce the same patch as before.
+func (d *Differ) compareShiftedArrays(ptr pointer, src, tgt []interface{}, doc string) bool {
+	sl, tl := len(src), len(tgt)
+	switch {
+	case sl > tl && !d.opts.shiftedRemovals,
+		sl < tl && !d.opts.shiftedInserts,
+		sl == tl:
+		return false
+	case d.opts.hasIgnore, d.opts.factorize:
+		// Ignored pointers and the moves and copies of factorization
+		// refer to positional indexes; keep their existing behavior.
+		return false
+	}
+	ml := min(sl, tl)
+	if ml == 0 || !deepEqual(src[sl-1], tgt[tl-1]) {
+		// Empty side, or the last elements differ: nothing is shifted
+		// that the positional comparison would rewrite needlessly.
+		return false
+	}
+	// Prefer the longest common prefix so that, for runs of equal
+	// elements, the block is placed as late as possible.
+	prefix := 0
+	for prefix < ml && deepEqual(src[prefix], tgt[prefix]) {
+		prefix++
+	}
+	suffix := 0
+	for suffix < ml-prefix && deepEqual(src[sl-1-suffix], tgt[tl-1-suffix]) {
+		suffix++
+	}
+	if suffix == 0 || prefix+suffix < ml {
+		// The change is at the end, or more than one block changed.
+		return false
+	}
+	if sl > tl {
+		// Each removal shifts the next removed element to the same index.
+		ptr.appendIndex(prefix)
+		p := ptr.copy()
+		ptr.rewind()
+		for i := prefix; i < prefix+sl-tl; i++ {
+			d.remove(p, src[i])
+		}
+	} else {
+		for i := prefix; i < prefix+tl-sl; i++ {
+			ptr.appendIndex(i)
+			d.add(ptr.copy(), tgt[i], doc, false)
+			ptr.rewind()
+		}
+	}
+	return true
 }
 
 func (d *Differ) compareArraysLCS(ptr pointer, src, tgt []interface{}, doc string) {
