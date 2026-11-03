@@ -25,6 +25,24 @@ func LCS() Option {
 	return func(o *Differ) { o.opts.lcs = true }
 }
 
+// ShiftedRemovals makes arrays that differ only by a contiguous block of
+// elements removed before an unchanged element produce one remove
+// operation per removed element, instead of rewriting each later element
+// at its new index. It has no effect alongside the LCS option, which
+// already handles removals, or the Factorize and Ignores options.
+func ShiftedRemovals() Option {
+	return func(o *Differ) { o.opts.shiftedRemovals = true }
+}
+
+// ShiftedInserts is the counterpart of ShiftedRemovals for elements
+// inserted before an unchanged element: it produces one add operation per
+// inserted element, at its index. Patches then rely on add inserting into
+// arrays as RFC 6902 section 4.1 specifies, rather than replacing the
+// element at that index.
+func ShiftedInserts() Option {
+	return func(o *Differ) { o.opts.shiftedInserts = true }
+}
+
 // Invertible enables the generation of an invertible
 // patch, by preceding each remove and replace operation
 // by a test operation that verifies the value at the
