@@ -155,3 +155,45 @@ func Test_jsonValueType_String(t *testing.T) {
 		t.Errorf("got %q, want %q", s, want)
 	}
 }
+
+func Test_deepEqual_sharedValues(t *testing.T) {
+	shared := map[string]interface{}{"a": []interface{}{1.0, "x"}, "b": map[string]interface{}{"c": true}}
+	arr := []interface{}{shared, 2.0}
+
+	if !deepEqual(shared, shared) {
+		t.Error("expected the same map to be equal to itself")
+	}
+	if !deepEqual(arr, arr) {
+		t.Error("expected the same slice to be equal to itself")
+	}
+	if deepEqual(arr[:1], arr) {
+		t.Error("expected slices of different lengths sharing a backing array to differ")
+	}
+	if !deepEqual(arr[1:], []interface{}{2.0}) {
+		t.Error("expected a distinct but equal slice to be equal")
+	}
+}
+
+func TestCompareWithoutMarshals_sharedSubtrees(t *testing.T) {
+	// Source and target share subtrees, as when a caller reuses the
+	// unchanged parts of the previous document. The patch must match the one
+	// for two fully independent documents.
+	shared := map[string]interface{}{"cards": []interface{}{"a", "b"}, "n": 1.0}
+	src := map[string]interface{}{"shared": shared, "changed": map[string]interface{}{"v": 1.0}}
+	tgt := map[string]interface{}{"shared": shared, "changed": map[string]interface{}{"v": 2.0}}
+	tgtJSON, _ := json.Marshal(tgt)
+
+	var srcCopy, tgtCopy interface{}
+	srcJSON, _ := json.Marshal(src)
+	_ = json.Unmarshal(srcJSON, &srcCopy)
+	_ = json.Unmarshal(tgtJSON, &tgtCopy)
+
+	got, _ := json.Marshal(CompareWithoutMarshals(src, tgt, tgtJSON))
+	want, _ := json.Marshal(CompareWithoutMarshals(srcCopy, tgtCopy, tgtJSON))
+	if string(got) != string(want) {
+		t.Errorf("patch with shared subtrees = %s, want %s", got, want)
+	}
+	if string(got) != `[{"value":2,"op":"replace","path":"/changed/v"}]` {
+		t.Errorf("unexpected patch %s", got)
+	}
+}

@@ -1,6 +1,9 @@
 package jsondiff
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestOperation_MarshalJSON(t *testing.T) {
 	for _, tc := range []struct {
@@ -159,4 +162,18 @@ func typeNilIface() interface{} {
 	p = i
 
 	return p
+}
+
+func TestOperation_OldValueNotSerialized(t *testing.T) {
+	// OldValue is only kept for building the patch. Encoders that ignore
+	// json tags (vmihailenco/msgpack reads its own) must skip it too.
+	f, ok := reflect.TypeOf(Operation{}).FieldByName("OldValue")
+	if !ok {
+		t.Fatal("Operation has no OldValue field")
+	}
+	for _, key := range []string{"json", "msgpack"} {
+		if got := f.Tag.Get(key); got != "-" {
+			t.Errorf("OldValue %s tag: got %q, want %q", key, got, "-")
+		}
+	}
 }

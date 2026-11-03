@@ -33,7 +33,7 @@ type Patch []Operation
 // Operation represents a single JSON Patch (RFC6902) operation.
 type Operation struct {
 	Value    interface{} `json:"value,omitempty"`
-	OldValue interface{} `json:"-"`
+	OldValue interface{} `json:"-" msgpack:"-"`
 	Type     string      `json:"op"`
 	From     string      `json:"from,omitempty"`
 	Path     string      `json:"path"`
