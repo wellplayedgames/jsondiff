@@ -1,0 +1,171 @@
+[{
+    "name": "prepend",
+    "before": ["b", "c", "d"],
+    "after": ["a", "b", "c", "d"],
+    "patch": [
+        { "op": "add", "path": "/0", "value": "a" }
+    ]
+}, {
+    "name": "prepend object to nested stack",
+    "before": { "stack": [{ "id": 2, "src": "x" }, { "id": 1, "src": "x" }] },
+    "after": { "stack": [{ "id": 3, "src": "y" }, { "id": 2, "src": "x" }, { "id": 1, "src": "x" }] },
+    "patch": [
+        { "op": "add", "path": "/stack/0", "value": { "id": 3, "src": "y" } }
+    ]
+}, {
+    "name": "remove at front",
+    "before": ["a", "b", "c"],
+    "after": ["b", "c"],
+    "patch": [
+        { "op": "remove", "path": "/0" }
+    ]
+}, {
+    "name": "remove object from front of nested stack",
+    "before": { "stack": [{ "id": 3, "src": "y" }, { "id": 2, "src": "x" }, { "id": 1, "src": "x" }] },
+    "after": { "stack": [{ "id": 2, "src": "x" }, { "id": 1, "src": "x" }] },
+    "patch": [
+        { "op": "remove", "path": "/stack/0" }
+    ]
+}, {
+    "name": "insert in the middle",
+    "before": ["a", "b", "d"],
+    "after": ["a", "b", "c", "d"],
+    "patch": [
+        { "op": "add", "path": "/2", "value": "c" }
+    ]
+}, {
+    "name": "remove from the middle",
+    "before": ["a", "b", "c", "d"],
+    "after": ["a", "b", "d"],
+    "patch": [
+        { "op": "remove", "path": "/2" }
+    ]
+}, {
+    "name": "insert block",
+    "before": ["a", "d"],
+    "after": ["a", "b", "c", "d"],
+    "patch": [
+        { "op": "add", "path": "/1", "value": "b" },
+        { "op": "add", "path": "/2", "value": "c" }
+    ]
+}, {
+    "name": "remove block",
+    "before": ["a", "b", "c", "d"],
+    "after": ["a", "d"],
+    "patch": [
+        { "op": "remove", "path": "/1" },
+        { "op": "remove", "path": "/1" }
+    ]
+}, {
+    "name": "append is unchanged",
+    "before": ["a", "b"],
+    "after": ["a", "b", "c"],
+    "patch": [
+        { "op": "add", "path": "/-", "value": "c" }
+    ]
+}, {
+    "name": "truncate is unchanged",
+    "before": ["a", "b", "c"],
+    "after": ["a", "b"],
+    "patch": [
+        { "op": "remove", "path": "/2" }
+    ]
+}, {
+    "name": "append to run of equal elements is unchanged",
+    "before": ["a", "a"],
+    "after": ["a", "a", "a"],
+    "patch": [
+        { "op": "add", "path": "/-", "value": "a" }
+    ]
+}, {
+    "name": "truncate run of equal elements is unchanged",
+    "before": ["a", "a", "a"],
+    "after": ["a", "a"],
+    "patch": [
+        { "op": "remove", "path": "/2" }
+    ]
+}, {
+    "name": "insert into run of equal elements goes last",
+    "before": ["a", "a", "b"],
+    "after": ["a", "a", "a", "b"],
+    "patch": [
+        { "op": "add", "path": "/2", "value": "a" }
+    ]
+}, {
+    "name": "add to empty array is unchanged",
+    "before": [],
+    "after": ["a"],
+    "patch": [
+        { "op": "add", "path": "/-", "value": "a" }
+    ]
+}, {
+    "name": "remove only element is unchanged",
+    "before": ["a"],
+    "after": [],
+    "patch": [
+        { "op": "remove", "path": "/0" }
+    ]
+}, {
+    "name": "two inserted blocks fall back to positional",
+    "before": ["a", "b", "c", "d"],
+    "after": ["x", "a", "b", "y", "c", "d"],
+    "patch": [
+        { "op": "replace", "path": "/0", "value": "x" },
+        { "op": "replace", "path": "/1", "value": "a" },
+        { "op": "replace", "path": "/2", "value": "b" },
+        { "op": "replace", "path": "/3", "value": "y" },
+        { "op": "add", "path": "/-", "value": "c" },
+        { "op": "add", "path": "/-", "value": "d" }
+    ]
+}, {
+    "name": "insert and change falls back to positional",
+    "before": ["a", "b", "c"],
+    "after": ["x", "a", "B", "c"],
+    "patch": [
+        { "op": "replace", "path": "/0", "value": "x" },
+        { "op": "replace", "path": "/1", "value": "a" },
+        { "op": "replace", "path": "/2", "value": "B" },
+        { "op": "add", "path": "/-", "value": "c" }
+    ]
+}, {
+    "name": "remove and change falls back to positional",
+    "before": ["a", "b", "c", "d"],
+    "after": ["b", "C", "d"],
+    "patch": [
+        { "op": "remove", "path": "/3" },
+        { "op": "replace", "path": "/0", "value": "b" },
+        { "op": "replace", "path": "/1", "value": "C" },
+        { "op": "replace", "path": "/2", "value": "d" }
+    ]
+}, {
+    "name": "same length is positional",
+    "before": ["a", "b", "c"],
+    "after": ["x", "a", "b"],
+    "patch": [
+        { "op": "replace", "path": "/0", "value": "x" },
+        { "op": "replace", "path": "/1", "value": "a" },
+        { "op": "replace", "path": "/2", "value": "b" }
+    ]
+}, {
+    "name": "prepend to nested array",
+    "before": [[1, 2], [3]],
+    "after": [[0, 1, 2], [3]],
+    "patch": [
+        { "op": "add", "path": "/0/0", "value": 0 }
+    ]
+}, {
+    "name": "prepend array to array of arrays",
+    "before": [[1], [2]],
+    "after": [[0], [1], [2]],
+    "patch": [
+        { "op": "add", "path": "/0", "value": [0] }
+    ]
+}, {
+    "name": "shift inside a shifted-length parent",
+    "before": { "a": [{ "s": [2, 3] }, "z"], "b": [1, 2] },
+    "after": { "a": [{ "s": [1, 2, 3] }, "z"], "b": [2] },
+    "patch": [
+        { "op": "add", "path": "/a/0/s/0", "value": 1 },
+        { "op": "remove", "path": "/b/0" }
+    ]
+}]

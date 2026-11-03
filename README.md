@@ -150,6 +150,7 @@ Note that any combination of options can be used without issues, ***unless speci
 - [Invertible patch](#invertible-patch)
 - [Equivalence](#equivalence)
 - [LCS (array comparison)](#lcs-longest-common-subsequence)
+- [Shifted removals and inserts (array comparison)](#shifted-removals-and-inserts)
 - [Ignores](#ignores)
 - [Marshal/Unmarshal functions](#marshalfunc--unmarshalfunc)
 
@@ -338,6 +339,16 @@ For such situations, you can use the `Equivalent()` option to instruct the diff 
 The default algorithm used to compare arrays is naive and can generate a lot of operations. For example, if a single element located *in the middle* of the array is deleted, all items to its right will be shifted one position to the left, generating one `replace` operation per item.
 
 The `LCS()` option instruct the diff generator to compute the [Longest common subsequence](https://en.wikipedia.org/wiki/Longest_common_subsequence) of the source and target arrays, and use it to generate a list of operations that is more succinct and more faithfully represents the differences.
+
+#### Shifted removals and inserts
+
+The `ShiftedRemovals()` and `ShiftedInserts()` options are a linear-time alternative to `LCS()` for the most common case it addresses: arrays that differ only by one contiguous block of elements removed or inserted somewhere before their last element, such as an element pushed to or popped from the front.
+
+Instead of a `replace` operation for every shifted element, the patch then holds one `remove` operation (with `ShiftedRemovals()`) or one `add` operation at the element's index (with `ShiftedInserts()`) per removed or inserted element. Any other change to an array uses the default algorithm, and changes at the end of an array produce the same patch as without the options.
+
+`ShiftedInserts()` relies on the consumer of the patch inserting into the array for an `add` operation at an index, as RFC 6902 specifies, rather than replacing the element at that index. Enable `ShiftedRemovals()` alone for consumers that only handle `add` operations that append (`/-`).
+
+The options have no effect when used with the `LCS()`, `Factorize()` or `Ignores()` options.
 
 #### Ignores
 
